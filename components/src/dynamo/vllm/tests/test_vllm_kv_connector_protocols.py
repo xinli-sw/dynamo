@@ -92,7 +92,7 @@ def test_nixl_prefill_request_shape():
 
 
 def test_nixl_decode_passes_through_engine_response():
-    """Decode params come straight off the engine response — NIXL is pull-based."""
+    """Decode params come straight off the engine response."""
     proto = NixlConnectorProtocol(_config("NixlConnector"))
     engine_payload = {"remote_engine_id": "eng-1", "remote_block_ids": [3, 4]}
     response = SimpleNamespace(kv_transfer_params=engine_payload)
@@ -270,6 +270,19 @@ def test_multiconnector_dispatches_lone_lmcache_mp_child():
 def test_make_kv_connector_protocol_dispatches_nixl():
     proto = make_kv_connector_protocol(_config("NixlConnector"))
     assert isinstance(proto, NixlConnectorProtocol)
+
+
+def test_make_kv_connector_protocol_dispatches_nixl_push():
+    """NixlPushConnector shares NIXL's wire format; push metadata passes through."""
+    proto = make_kv_connector_protocol(_config("NixlPushConnector"))
+    assert isinstance(proto, NixlConnectorProtocol)
+    engine_payload = {
+        "remote_engine_id": "eng-1",
+        "remote_block_ids": [3, 4],
+        "transfer_mode": "push",
+    }
+    response = SimpleNamespace(kv_transfer_params=engine_payload)
+    assert proto.decode_request_kv_transfer_params(response) is engine_payload
 
 
 def test_make_kv_connector_protocol_dispatches_mooncake(fake_mooncake):
@@ -530,6 +543,7 @@ def test_registry_keys_match_vllm_connector_names():
     vLLM uses in ``KVTransferConfig.kv_connector``."""
     assert set(KV_CONNECTOR_PROTOCOLS) == {
         "NixlConnector",
+        "NixlPushConnector",
         "MooncakeConnector",
         "LMCacheMPConnector",
         "NeuronNixlConnector",

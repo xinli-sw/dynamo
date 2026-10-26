@@ -401,6 +401,7 @@ _PD_KVBM_NIXL = {
 def test_uses_nixl_connector_direct_and_nested():
     """Test _uses_nixl_connector for direct, nested-in-PdConnector, and absent cases."""
     assert _uses_nixl_connector(_make_engine_cfg("NixlConnector")) is True
+    assert _uses_nixl_connector(_make_engine_cfg("NixlPushConnector")) is True
     assert _uses_nixl_connector(_make_engine_cfg("PdConnector", _PD_KVBM_NIXL)) is True
     assert _uses_nixl_connector(_make_engine_cfg("LMCacheConnectorV1")) is False
     assert _uses_nixl_connector(_make_engine_cfg("LMCacheMPConnector")) is False
@@ -413,6 +414,7 @@ def test_uses_nixl_connector_direct_and_nested():
     [
         (("NixlConnector", "OffloadingConnector"), True),
         (("OffloadingConnector", "NixlConnector"), True),
+        (("NixlPushConnector", "OffloadingConnector"), True),
         (("OffloadingConnector",), False),
     ],
 )

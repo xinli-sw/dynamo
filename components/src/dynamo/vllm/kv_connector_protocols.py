@@ -4,8 +4,8 @@
 """Per-connector PD-coordination strategies for dynamo's vLLM prefill handler.
 
 vLLM's KV connectors disagree on the shape of ``kv_transfer_params``:
-NIXL is pull-based (decode reads block locations from the prefill
-response), Mooncake is push-based (prefill pushes blocks under a
+NIXL passes the prefill engine's metadata to decode in the prefill response
+(decode pulls blocks, or prefill pushes them with NixlPushConnector), Mooncake is push-based (prefill pushes blocks under a
 pre-allocated ``transfer_id``), and LMCache MP is cache-mediated (KV
 moves through a shared cache pool keyed by token hash, so no
 per-request params cross the PD boundary at all). This module isolates
@@ -46,7 +46,7 @@ class KvConnectorProtocol(ABC):
 
 
 class NixlConnectorProtocol(KvConnectorProtocol):
-    """Pull-based: decode-side params come straight off the engine response."""
+    """NIXL pull or push: decode-side params come straight off the engine response."""
 
     def prefill_request_kv_transfer_params(self) -> Dict[str, Any]:
         return {
@@ -134,6 +134,7 @@ class LMCacheMPConnectorProtocol(KvConnectorProtocol):
 # Keyed by ``KVTransferConfig.kv_connector``. One entry per connector.
 KV_CONNECTOR_PROTOCOLS: Dict[str, Type[KvConnectorProtocol]] = {
     "NixlConnector": NixlConnectorProtocol,
+    "NixlPushConnector": NixlConnectorProtocol,
     "NeuronNixlConnector": NixlConnectorProtocol,
     "MooncakeConnector": MooncakeConnectorProtocol,
     "LMCacheMPConnector": LMCacheMPConnectorProtocol,
